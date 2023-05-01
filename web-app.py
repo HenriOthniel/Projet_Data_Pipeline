@@ -30,7 +30,7 @@ with tab1 :
         # Enregistrer les fichiers dans le dossier samples
         messages_path = os.path.join(samples_path, "messages.csv")
         users_path = os.path.join(samples_path, "users.csv")
-        aggragate_data_path = os.path.join(aggragat, "aggregate_d.py")
+        aggragate_data_path = os.path.join(aggragat, "aggregate_data.py")
         with open(messages_path, "wb") as f:
             f.write(messages_file.getbuffer())
         with open(users_path, "wb") as f:
