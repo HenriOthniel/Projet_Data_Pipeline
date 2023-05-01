@@ -1,6 +1,7 @@
 import argparse
 import pandas as pd
 
+
 parser = argparse.ArgumentParser(description="My first CLI script")
 parser.add_argument('messages_path', help='path to messages data file')
 parser.add_argument('users_path',help='path to user data file')
