@@ -54,9 +54,6 @@ with tab1 :
         
         else:
             st.warning("Les fichiers sont mal chargés ou mal renseignés. REESAYER!!!")
-    
-    # else:
-    #     st.warning("Chargez les fichiers.")
         
 
 # Si l'onglet Classement est sélectionné
@@ -88,8 +85,7 @@ with tab3:
     # Afficher un message d'instruction
     st.write("Affichage de la réponse de l'API")
     
-    API_URL = os.getenv('API_URL')
-
+    API_URL = os.getenv('API_URL') # Path to your api url
     response = requests.get(API_URL)
     data = response.json()
     
