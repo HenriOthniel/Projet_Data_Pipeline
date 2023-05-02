@@ -1,9 +1,11 @@
 # Importer les modules nécessaires
+import os
+import requests
 import streamlit as st
 import pandas as pd
-import os
-import subprocess
-import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Définir le chemin vers le dossier samples
 samples_path = "./samples/"
@@ -13,7 +15,7 @@ aggragat = "./"
 if not os.path.exists(samples_path):
     os.makedirs(samples_path)
     
-tab1, tab2, tab3 = st.tabs(["Chargement des fichiers", "Resultats", "Leaderboard"])
+tab1, tab2, tab3 = st.tabs(["Chargement des fichiers", "Pipeline_Leaderboard", "API_Leaderboard"])
 
 # Si l'onglet Upload est sélectionné
 with tab1 :
@@ -21,7 +23,7 @@ with tab1 :
     st.title("Chargement des fichiers")
 
     # Afficher un message d'instruction
-    st.write("Veuillez télécharger les fichiers messages.csv et users.csv")
+    st.write("##### Veuillez télécharger les fichiers messages.csv et users.csv #####")
 
     # Créer deux widgets pour télécharger les fichiers CSV
     messages_file = st.file_uploader("Télécharger le fichier messages.csv", type="csv")
@@ -47,9 +49,6 @@ with tab1 :
             # aggragation = r"C:/Users/DELL/Documents/Master/API_Docker_Cloud/tp_data_pipeline/aggregate_data.py"
             os.system(f"python {aggragate_data_path} {messages_path} {users_path} {output_path}")
 
-            # # Exécuter le script my_script.py
-            # subprocess.run(["python ", "C:/Users/DELL/Documents/Master/API_Docker_Cloud/tp_data_pipeline/aggregate_data.py", messages_path, users_path, output_path])
-
             # Afficher un message de succès
             st.success("Le fichier pipeline_result.csv a été créé avec succès.")
         
@@ -63,11 +62,11 @@ with tab1 :
 # Si l'onglet Classement est sélectionné
 with tab2:
     # Afficher un titre
-    st.title("Resultats")
+    st.title("Résultats")
     
     # Afficher un message d'instruction
     if messages_file is None and users_file is None:
-        st.write("Veuillez vérifier que vous avez téléchargé les fichiers messages.csv et users.csv dans l'onglet Chargement")
+        st.write("##### Veuillez vérifier que vous avez téléchargé les fichiers messages.csv et users.csv dans l'onglet Chargement #####")
 
     elif messages_file != 'messages.csv' and users_file != 'users.csv':
     # Charger le fichier pipeline_result.csv dans un dataframe
@@ -83,32 +82,26 @@ with tab2:
             st.dataframe(result_df)
 
 with tab3:
-    st.title('Leaderboard')
+    # Afficher un titre
+    st.title("Leaderboard with API")
+    
+    # Afficher un message d'instruction
+    st.write("Affichage de la réponse de l'API")
+    
+    API_URL = os.getenv('API_URL')
 
-# Appel à l'API pour récupérer les données de leaderboard
-    def get_leaderboard():
-        response = requests.get('http://localhost:3000/leaderboard')
-        if response.status_code == 200:
-            results = response.json()    
-            # Affichez les données dans un tableau
-            my_list = []
-            for index in range(len(results["leaderboard"])):
-                my_list.append(results["leaderboard"][index])
-            
-            
-            return pd.DataFrame(my_list)
-        else:
-            st.error("Error: Unable to retrieve leaderboard data.")
+    response = requests.get(API_URL)
+    data = response.json()
+    
+    # Affichez les données dans un tableau
+    my_list = []
+    for index in range(len(data["leaderboard"])):
+        my_list.append(data["leaderboard"][index])
+    
+    df = pd.DataFrame(my_list)
 
-    # Affichage des données dans l'onglet Leaderboard
-    def display_leaderboard():
-        st.write("The latest results from the data pipeline.")
-        df = get_leaderboard()
-        st.table(df)
-        
-        #st.dataframe(df, use_container_width=True)
+    st.dataframe(df)
 
-    # Appel de la fonction d'affichage dans l'onglet Leaderboard
-    display_leaderboard()
-
-
+    # Gestion des éventuelles erreurs
+    if response.status_code != 200:
+        st.write(f"Une erreur est survenue: {response.status_code}")
