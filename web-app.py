@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import os
 import subprocess
+import requests
 
 # Définir le chemin vers le dossier samples
 samples_path = "./samples/"
@@ -83,4 +84,31 @@ with tab2:
 
 with tab3:
     st.title('Leaderboard')
-    
+
+# Appel à l'API pour récupérer les données de leaderboard
+    def get_leaderboard():
+        response = requests.get('http://localhost:3000/leaderboard')
+        if response.status_code == 200:
+            results = response.json()    
+            # Affichez les données dans un tableau
+            my_list = []
+            for index in range(len(results["leaderboard"])):
+                my_list.append(results["leaderboard"][index])
+            
+            
+            return pd.DataFrame(my_list)
+        else:
+            st.error("Error: Unable to retrieve leaderboard data.")
+
+    # Affichage des données dans l'onglet Leaderboard
+    def display_leaderboard():
+        st.write("The latest results from the data pipeline.")
+        df = get_leaderboard()
+        st.table(df)
+        
+        #st.dataframe(df, use_container_width=True)
+
+    # Appel de la fonction d'affichage dans l'onglet Leaderboard
+    display_leaderboard()
+
+
