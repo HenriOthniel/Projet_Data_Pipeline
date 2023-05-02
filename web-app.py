@@ -54,7 +54,6 @@ with tab1 :
         
         else:
             st.warning("Les fichiers sont mal chargés ou mal renseignés. REESAYER!!!")
-        
 
 # Si l'onglet Classement est sélectionné
 with tab2:
