@@ -22,17 +22,16 @@ class Leaderboard(Base):
     number_of_messages = Column(Integer) 
 
 json_payload = {
-    "data_path": os.getenv("PIPELINE_CSV_PATH")
-                           # Path to your pipeline_result.csv file
+    "data_path": os.getenv('PIPELINE_CSV_PATH') # Path to your pipeline_result.csv file
 }
 
-db_uri = os.getenv('db_uri') # Your DB_URI path
+DB_URI = os.getenv('DB_URI') # Your DB_URI path
 
 # Get the data_path field from the JSON payload
 data_path = json_payload['data_path']
 
 # create a database engine
-engine = create_engine(db_uri, pool_pre_ping=True)
+engine = create_engine(DB_URI, pool_pre_ping=True)
 
 # create the table
 Base.metadata.create_all(engine)
