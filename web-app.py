@@ -6,7 +6,7 @@ import requests
 import streamlit as st
 import pandas as pd
 from dotenv import load_dotenv
-from aggregate_data_s3 import uploadFileToBucket, getFileFromBucket
+from aggregate_data_s3 import uploadFileToBucket
 
 load_dotenv()
 
