@@ -114,7 +114,14 @@ To continue to improve the project setup, your will create a `Dockerfile` for th
 Specify below these commands:
 
 - The docker build command to build an image called `pipeline-flask-api` from the `Dockerfile`:
+```
+docker build -t pipeline-flask-api .
+```
 - The docker run command to create a container from the `pipeline-flask-api` image, that map your local post 3000 to the port 3000 of the container
+
+```
+docker run --name pipeline_container -p 3000:3000 -d pipeline-flask-api
+```
 
 ### **Bonus**
 

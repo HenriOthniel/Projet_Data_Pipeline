@@ -78,9 +78,7 @@ def uploadFileToBucket(file_name, bucket_name, key):
     # Upload the file
     s3_client = s3client
     try:
-        s3_client.upload_file(file_name, bucket_name, key)
-        print("File uploaded successfully !")
-        return True
+        return s3_client.upload_file(file_name, bucket_name, key)
     except ClientError as e:
         logging.error(e)
         return False

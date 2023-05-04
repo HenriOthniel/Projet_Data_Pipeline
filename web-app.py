@@ -1,21 +1,41 @@
 # Importer les modules nécessaires
 import os
+import sys
+import boto3
 import requests
 import streamlit as st
 import pandas as pd
 from dotenv import load_dotenv
+from aggregate_data_s3 import uploadFileToBucket
 
 load_dotenv()
 
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+S3_MESSAGE_USER_BUCKET = os.getenv('S3_MESSAGE_USER_BUCKET')
+
+if AWS_ACCESS_KEY_ID is None or AWS_SECRET_ACCESS_KEY is None:
+    print('AWS crendentials are missing...')
+    sys.exit(-1)
+    
+s3client = boto3.client(
+    's3',
+    aws_access_key_id = AWS_ACCESS_KEY_ID,
+    aws_secret_access_key = AWS_SECRET_ACCESS_KEY
+)
+    
+message_file = s3client.list_objects(Bucket=S3_MESSAGE_USER_BUCKET)['Contents'][0]['Key']
+user_file = s3client.list_objects(Bucket=S3_MESSAGE_USER_BUCKET)['Contents'][1]['Key']
+
 # Définir le chemin vers le dossier samples
 samples_path = "./samples/"
-aggragat = "./"
+aggregate_data_path = "./aggregate_data.py"
 
 # Créer le dossier samples s'il n'existe pas
 if not os.path.exists(samples_path):
     os.makedirs(samples_path)
     
-tab1, tab2, tab3 = st.tabs(["Chargement des fichiers", "Pipeline_Leaderboard", "API_Leaderboard"])
+tab1, tab2, tab3, tab4 = st.tabs(["Chargement des fichiers", "Pipeline_Leaderboard", "API_Leaderboard", "Datamart"])
 
 # Si l'onglet Upload est sélectionné
 with tab1 :
@@ -27,18 +47,28 @@ with tab1 :
 
     # Créer deux widgets pour télécharger les fichiers CSV
     messages_file = st.file_uploader("Télécharger le fichier messages.csv", type="csv")
-    users_file = st.file_uploader("Télécharger le fichier users.csv", type="csv")      
+    users_file = st.file_uploader("Télécharger le fichier users.csv", type="csv")
     
     if messages_file and users_file:
         # Enregistrer les fichiers dans le dossier samples
         messages_path = os.path.join(samples_path, "messages.csv")
         users_path = os.path.join(samples_path, "users.csv")
-        aggragate_data_path = os.path.join(aggragat, "aggregate_data.py")
+        
         with open(messages_path, "wb") as f:
             f.write(messages_file.getbuffer())
         with open(users_path, "wb") as f:
             f.write(users_file.getbuffer())
             
+        # Add files to our bucket
+        objects_list  = s3client.list_objects(Bucket=S3_MESSAGE_USER_BUCKET)['Contents']
+        for index in range(len(objects_list)):
+            if objects_list[index]['Key'] == messages_file.name or objects_list[index]['Key'] == users_file.name:
+                try:
+                    uploadFileToBucket(aggregate_data_path, S3_MESSAGE_USER_BUCKET, message_file)
+                    uploadFileToBucket(users_path, S3_MESSAGE_USER_BUCKET, user_file)
+                    st.success("Files uploaded successfully to Bucket !")
+                except:
+                    st.error("Some errors occured...")
         
         if messages_file.name == "messages.csv" and users_file.name == "users.csv":
             # Afficher un message de confirmation
@@ -46,8 +76,7 @@ with tab1 :
 
             # Appeler la fonction aggregate_data.py avec les chemins des fichiers CSV et le chemin du résultat
             output_path = os.path.join(samples_path)
-            # aggragation = r"C:/Users/DELL/Documents/Master/API_Docker_Cloud/tp_data_pipeline/aggregate_data.py"
-            os.system(f"python {aggragate_data_path} {messages_path} {users_path} {output_path}")
+            os.system(f"python {aggregate_data_path} {messages_path} {users_path} {output_path}")
 
             # Afficher un message de succès
             st.success("Le fichier pipeline_result.csv a été créé avec succès.")
@@ -100,3 +129,9 @@ with tab3:
     # Gestion des éventuelles erreurs
     if response.status_code != 200:
         st.write(f"Une erreur est survenue: {response.status_code}")
+        
+with tab4:
+    # Afficher un titre
+    st.title("Transfer files to Bucket")
+    
+    
