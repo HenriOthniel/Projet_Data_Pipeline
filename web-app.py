@@ -6,7 +6,7 @@ import requests
 import streamlit as st
 import pandas as pd
 from dotenv import load_dotenv
-from aggregate_data_s3 import uploadFileToBucket
+from aggregate_data_s3 import uploadFileToBucket, getFileFromBucket
 
 load_dotenv()
 
@@ -23,9 +23,6 @@ s3client = boto3.client(
     aws_access_key_id = AWS_ACCESS_KEY_ID,
     aws_secret_access_key = AWS_SECRET_ACCESS_KEY
 )
-    
-message_file = s3client.list_objects(Bucket=S3_MESSAGE_USER_BUCKET)['Contents'][0]['Key']
-user_file = s3client.list_objects(Bucket=S3_MESSAGE_USER_BUCKET)['Contents'][1]['Key']
 
 # Définir le chemin vers le dossier samples
 samples_path = "./samples/"
@@ -62,13 +59,19 @@ with tab1 :
         # Add files to our bucket
         objects_list  = s3client.list_objects(Bucket=S3_MESSAGE_USER_BUCKET)['Contents']
         for index in range(len(objects_list)):
-            if objects_list[index]['Key'] == messages_file.name or objects_list[index]['Key'] == users_file.name:
+            if objects_list[index]['Key'] == messages_file.name:
                 try:
-                    uploadFileToBucket(aggregate_data_path, S3_MESSAGE_USER_BUCKET, message_file)
-                    uploadFileToBucket(users_path, S3_MESSAGE_USER_BUCKET, user_file)
-                    st.success("Files uploaded successfully to Bucket !")
+                    uploadFileToBucket(messages_path, S3_MESSAGE_USER_BUCKET, objects_list[index]['Key'])
+                    st.success("Message file uploaded successfully to the Bucket !")
                 except:
-                    st.error("Some errors occured...")
+                    st.error("Some errors occured with message file...")
+                    
+            elif objects_list[index]['Key'] == users_file.name:
+                try:
+                    uploadFileToBucket(users_path, S3_MESSAGE_USER_BUCKET, objects_list[index]['Key'])
+                    st.success("User file uploaded successfully to the Bucket !")
+                except:
+                    st.error("Some errors occured with user file...")
         
         if messages_file.name == "messages.csv" and users_file.name == "users.csv":
             # Afficher un message de confirmation
@@ -132,6 +135,30 @@ with tab3:
         
 with tab4:
     # Afficher un titre
-    st.title("Transfer files to Bucket")
+    st.title("Bucket files")
     
+    message_key_to_find = "messages.csv"
+    user_key_to_find = "users.csv"
     
+    objects_list  = s3client.list_objects(Bucket=S3_MESSAGE_USER_BUCKET)['Contents']
+    
+    message_list = []
+    user_list = []
+    
+    for index in range(len(objects_list)):
+        if objects_list[index]['Key'] == message_key_to_find or objects_list[index]['Key'] == user_key_to_find:
+            if objects_list[index]['Key'] == message_key_to_find:
+                message_list.append(
+                    {
+                        "Message file": objects_list[index]['Key']
+                    }
+                )
+            elif objects_list[index]['Key'] == user_key_to_find:
+                user_list.append(
+                    {
+                        "User file": objects_list[index]['Key']
+                    }
+                )
+    
+    st.table(message_list)        
+    st.table(user_list)
